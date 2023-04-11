@@ -1,11 +1,34 @@
-import express from "express";
+import express, { Request, Response } from "express";
+import { body, validationResult } from "express-validator";
+import { RequestValidationError } from "../errors/request-validation-error";
+import { DatabaseConnectionError } from "../errors/database-connection-error";
 
 const router = express.Router();
 
-router.post("/api/users/signup", (req, res) => {
-  const { email, password } = req.body;
+router.post(
+  "/api/users/signup",
+  [
+    body("email").isEmail().withMessage("Email is not valid."),
+    body("password")
+      .trim()
+      .isLength({ min: 4, max: 20 })
+      .withMessage("Password must be 4 to 20 characters"),
+  ],
+  async (req: Request, res: Response) => {
+    const errors = validationResult(req);
 
-  res.send(`Email: ${email}, Password: ${password}`);
-});
+    if (!errors.isEmpty()) {
+      throw new RequestValidationError(errors.array());
+    }
+
+    const { email, password } = req.body;
+
+    console.log("Creating a new user...");
+
+    throw new DatabaseConnectionError();
+
+    res.send(`Email: ${email}, Password: ${password}`);
+  }
+);
 
 export { router as signupRouter };
