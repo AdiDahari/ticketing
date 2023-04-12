@@ -2,6 +2,7 @@ import express from "express";
 import "express-async-errors";
 import { json } from "body-parser";
 import mongoose from "mongoose";
+import cookieSession from "cookie-session";
 
 import { profileRouter } from "./routes/profile";
 import { signinRouter } from "./routes/signin";
@@ -11,20 +12,41 @@ import { errorHandler } from "./middlewares/error-handler";
 import { NotFoundError } from "./errors/not-found-error";
 
 const app = express();
+app.set("trust proxy", true);
+
+// Body Parser
 app.use(json());
 
+// Cookies
+app.use(
+  cookieSession({
+    signed: false,
+    secure: true,
+  })
+);
+
+// External Routers
 app.use(profileRouter);
 app.use(signinRouter);
 app.use(signoutRouter);
 app.use(signupRouter);
 
+// Invalid Path
 app.all("*", async (req, res) => {
   throw new NotFoundError();
 });
 
+// Error Handling
 app.use(errorHandler);
 
+// Async Start
 const start = async () => {
+  // Checking for JWT Token
+  if (!process.env.JWT_KEY) {
+    throw new Error("JWT_KEY Variable is not defined");
+  }
+
+  // DB Connection
   try {
     await mongoose.connect("mongodb://auth-mongo-srv:27017/auth");
 
@@ -33,6 +55,7 @@ const start = async () => {
     console.error(error);
   }
 
+  // Serving
   app.listen(3000, () => {
     console.log("Listening on port: 3000");
   });
