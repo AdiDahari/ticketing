@@ -7,8 +7,6 @@ deploy:
 build:
   local:
     push: false
-  # googleCloudBuild:
-  #   projectId: ticketing-dev-383112
   artifacts:
     - image: adidahari/auth
       context: auth
@@ -17,4 +15,12 @@ build:
       sync:
         manual:
           - src: "src/**/*.ts"
+            dest: .
+    - image: adidahari/client
+      context: client
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "***/*.jsx"
             dest: .
